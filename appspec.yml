@@ -1,0 +1,9 @@
+version: 0.1
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "arn:aws:ecs:us-east-1:705740530616:task-definition/cicd_poc_task_definition:1"
+        LoadBalancerInfo:
+          ContainerName: "cicd_poc"
+          ContainerPort: "80"
