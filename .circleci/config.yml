@@ -22,7 +22,7 @@ workflows:
             - aws-ecr/build-and-push-image
       - aws-ecs/deploy-service-update:
           cluster: cicd_poc
-          container-image-name-updates: container=cicd_poc,image-and-tag=cicd_poc:${CIRCLE_SHA1}
+          container-image-name-updates: container=cicd_poc,image-and-tag=705740530616.dkr.ecr.us-east-1.amazonaws.com/cicd_poc:${CIRCLE_SHA1}
           family: cicd_poc_task_definition
           service-name: cicd_poc_service
           requires:
