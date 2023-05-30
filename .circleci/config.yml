@@ -15,4 +15,5 @@ workflows:
           push-image: true
           repo: cicd-poc
           repo-scan-on-push: true
+          registry-id: 705740530616
           tag: latest
