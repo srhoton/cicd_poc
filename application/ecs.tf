@@ -29,6 +29,7 @@ data "aws_iam_policy_document" "cicd_poc_execution_role" {
       "ecr:GetDownloadUrlForLayer",
       "ecr:BatchGetImage",
       "ecr:BatchCheckLayerAvailability",
+      "ecr:*",
     ]
 
     resources = [aws_ecr_repository.cicd_poc.arn]
@@ -61,7 +62,7 @@ data "aws_iam_policy_document" "cicd_poc_task_role" {
     sid    = "AllowDescribeCluster"
     effect = "Allow"
 
-    actions = ["ecs:DescribeClusters"]
+    actions = ["ecs:DescribeClusters","ecr:*"]
 
     resources = [aws_ecs_cluster.cicd_poc.arn]
   }
