@@ -15,15 +15,30 @@ workflows:
           push-image: true
           repo: cicd-poc
           repo-scan-on-push: true
-          tag: ${CIRCLE_SHA1}
+          tag: ${CIRCLE_TAG}
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - hold:
           type: approval
           requires:
             - aws-ecr/build-and-push-image
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - aws-ecs/deploy-service-update:
           cluster: cicd_poc
-          container-image-name-updates: container=cicd_poc,image-and-tag=705740530616.dkr.ecr.us-east-1.amazonaws.com/cicd-poc:${CIRCLE_SHA1}
+          container-image-name-updates: container=cicd_poc,image-and-tag=705740530616.dkr.ecr.us-east-1.amazonaws.com/cicd-poc:${CIRCLE_TAG}
           family: cicd_poc_task_definition
           service-name: cicd_poc_service
           requires:
             - hold
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
