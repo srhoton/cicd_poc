@@ -178,62 +178,63 @@ resource "aws_iam_role_policy" "codepipeline" {
   role   = aws_iam_role.cicd_poc_pipeline_role.name
   policy = data.aws_iam_policy_document.cicd_poc_pipeline.json
 }
-#resource "aws_codebuild_project" "cicd_poc" {
-#  name         = "example-codebuild"
-#  description  = "Codebuild for the ECS Green/Blue Example app"
-#  service_role = aws_iam_role.cicd_poc_codebuild.arn
-#
-#  artifacts {
-#    type = "CODEPIPELINE"
-#  }
-#
-#  environment {
-#    compute_type    = "BUILD_GENERAL1_SMALL"
-#    image           = "aws/codebuild/standard:7.0"
-#    type            = "LINUX_CONTAINER"
-#    privileged_mode = true
-#
-#    environment_variable {
-#      name  = "REPOSITORY_URI"
-#      value = aws_ecr_repository.cicd_poc.repository_url
-#    }
-#
-#    environment_variable {
-#      name  = "TASK_DEFINITION"
-#      value = "arn:aws:ecs:us-west-2:${var.account_id}:task-definition/${aws_ecs_task_definition.cicd_poc_task_definition.family}"
-#    }
-#
-#    environment_variable {
-#      name  = "CONTAINER_NAME"
-#      value = var.container_name
-#    }
-#
-#    environment_variable {
-#      name  = "SUBNET_1"
-#      value = data.aws_subnet.public_1.id
-#    }
-#
-#    environment_variable {
-#      name  = "SUBNET_2"
-#      value = data.aws_subnet.public_2.id
-#    }
-#
-#    environment_variable {
-#      name  = "SUBNET_3"
-#      value = data.aws_subnet.public_3.id
-#    }
-#
-#    environment_variable {
-#      name  = "SECURITY_GROUP"
-#      value = aws_security_group.cicd_poc_ecs_service.id
-#    }
-#  }
-#
-#  source {
-#    type = "CODEPIPELINE"
-#  }
-#}
-#
+
+resource "aws_codebuild_project" "cicd_poc" {
+  name         = "example-codebuild"
+  description  = "Codebuild for the ECS Example app"
+  service_role = aws_iam_role.cicd_poc_codebuild.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type    = "BUILD_GENERAL1_SMALL"
+    image           = "aws/codebuild/standard:7.0"
+    type            = "LINUX_CONTAINER"
+    privileged_mode = true
+
+    environment_variable {
+      name  = "REPOSITORY_URI"
+      value = aws_ecr_repository.cicd_poc.repository_url
+    }
+
+    environment_variable {
+      name  = "TASK_DEFINITION"
+      value = "arn:aws:ecs:us-west-2:${var.account_id}:task-definition/${aws_ecs_task_definition.cicd_poc_task_definition.family}"
+    }
+
+    environment_variable {
+      name  = "CONTAINER_NAME"
+      value = var.container_name
+    }
+
+    environment_variable {
+      name  = "SUBNET_1"
+      value = data.aws_subnet.public_1.id
+    }
+
+    environment_variable {
+      name  = "SUBNET_2"
+      value = data.aws_subnet.public_2.id
+    }
+
+    environment_variable {
+      name  = "SUBNET_3"
+      value = data.aws_subnet.public_3.id
+    }
+
+    environment_variable {
+      name  = "SECURITY_GROUP"
+      value = aws_security_group.cicd_poc_ecs_service.id
+    }
+  }
+
+  source {
+    type = "CODEPIPELINE"
+  }
+}
+
 data "aws_iam_policy_document" "cicd_poc_assume_by_codedeploy" {
   statement {
     sid     = ""
@@ -365,21 +366,6 @@ resource "aws_codepipeline" "cicd_poc" {
 
   stage {
     name = "Source"
-
-    action {
-      name             = "Source"
-      category         = "Source"
-      owner            = "AWS"
-      provider         = "CodeStarSourceConnection"
-      version          = "1"
-      output_artifacts = ["source"]
-
-      configuration = {
-        ConnectionArn    = aws_codestarconnections_connection.cicd_poc.arn
-        FullRepositoryId = "srhoton/cicd_poc"
-        BranchName       = "main"
-      }
-    }
     action {
       name = "Image"
       category = "Source"
@@ -395,6 +381,23 @@ resource "aws_codepipeline" "cicd_poc" {
     }    
   }
 
+  stage {
+    name = "Build"
+
+    action {
+      name             = "Build"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      version          = "1"
+      input_artifacts  = ["source"]
+      output_artifacts = ["build"]
+
+      configuration = {
+        ProjectName = "${aws_codebuild_project.cicd_poc.name}"
+      }
+    }
+  }
   stage {
     name = "Approve"
 
@@ -419,15 +422,14 @@ resource "aws_codepipeline" "cicd_poc" {
       name            = "Deploy"
       category        = "Deploy"
       owner           = "AWS"
-      provider        = "CodeDeployToECS"
+      provider        = "ECS"
       version         = "1"
       input_artifacts = ["SourceArtifact"]
 
       configuration = {
-        ApplicationName                = aws_codedeploy_app.cicd_poc.name
-        DeploymentGroupName            = aws_codedeploy_deployment_group.cicd_poc.deployment_group_name
-        TaskDefinitionTemplateArtifact = "SourceArtifact"
-        AppSpecTemplateArtifact        = "appspec.yml"
+        ClusterName        = aws_ecs_cluster.cicd_poc.name
+        ServiceName        = aws_ecs_service.cicd_poc_service.name
+        FileName           = "imagedefinitions.json"
       }
     }
   }
