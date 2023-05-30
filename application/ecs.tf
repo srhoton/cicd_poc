@@ -195,6 +195,6 @@ resource "aws_ecs_service" "cicd_poc_service" {
     container_port = 80
   }
   deployment_controller {
-      type = "CODE_DEPLOY"
+      type = "ECS
   }
 }
