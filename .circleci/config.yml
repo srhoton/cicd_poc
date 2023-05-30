@@ -24,5 +24,6 @@ workflows:
           cluster: cicd_poc
           container-image-name-updates: container=cicd_poc,tag=${CIRCLE_SHA1}
           family: cicd_poc_task_definition
+          service-name: cicd_poc_service
           requires:
             - hold
