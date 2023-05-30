@@ -16,4 +16,14 @@ workflows:
           repo: cicd-poc
           repo-scan-on-push: true
           registry-id: "705740530616"
-          tag: latest
+          tag: ${CIRCLE_SHA1}
+      - hold:
+          type: approval
+          requires:
+            - aws-ecr/build-and-push-image
+      - aws-ecs/deploy-service-update:
+          cluster: cicd_poc
+          container-image-name-updates: tag=${CIRCLE_SHA1}
+          family: cicd_poc_task_definition
+          requires:
+            - hold
